@@ -114,3 +114,46 @@ def main():
 if __name__ == "__main__":
     main()
 
+from pprint import pprint
+
+
+def read_cookbook_from_file(file_path):
+    cook_book = {}
+    with open(file_path, 'r') as file:
+        current_recipe = None
+        for line in file:
+            if not line.strip():
+                continue
+
+            # Если строка содержит название рецепта
+            if len(line.split('|')) == 1:
+                if current_recipe is not None:
+                    cook_book[current_recipe['name']] = current_recipe['ingredients']
+
+                current_recipe = {'name': line.strip(), 'ingredients': []}
+            else:
+                parts = line.strip().split('|')
+                ingredient_name = parts[0].strip()
+                quantity = float(parts[1].strip())
+                measure = parts[2].strip()
+                current_recipe['ingredients'].append({'ingredient_name': ingredient_name, 'quantity': quantity, 'measure': measure})
+
+        # Добавляем последний рецепт
+        if current_recipe is not None:
+            cook_book[current_recipe['name']] = current_recipe['ingredients']
+
+    return cook_book
+
+
+def main():
+    file_path = 'recipes.txt'
+
+    if os.path.exists(file_path):
+        cook_book = read_cookbook_from_file(file_path)
+        pprint(cook_book)
+    else:
+        print('Файл с рецептами не найден.')
+
+
+if __name__ == "__main__":
+    main()
