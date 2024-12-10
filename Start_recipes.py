@@ -1,4 +1,5 @@
 import os
+from pprint import pprint
 
 class Recipe:
     def __init__(self, name):
@@ -114,8 +115,6 @@ def main():
 if __name__ == "__main__":
     main()
 
-from pprint import pprint
-
 
 def read_cookbook_from_file(file_path):
     cook_book = {}
@@ -150,7 +149,87 @@ def main():
 
     if os.path.exists(file_path):
         cook_book = read_cookbook_from_file(file_path)
+        #pprint(cook_book)
+    else:
+        print('Файл с рецептами не найден.')
+
+
+if __name__ == "__main__":
+    main()
+
+import os
+from pprint import pprint
+
+
+def read_cookbook_from_file(file_path):
+    cook_book = {}
+    with open(file_path, 'r') as file:
+        current_recipe = None
+        for line in file:
+            if not line.strip():
+                continue
+
+            # Если строка содержит название рецепта
+            if len(line.split('|')) == 1:
+                if current_recipe is not None:
+                    cook_book[current_recipe['name']] = current_recipe['ingredients']
+
+                current_recipe = {'name': line.strip(), 'ingredients': []}
+            else:
+                parts = line.strip().split('|')
+                ingredient_name = parts[0].strip()
+                quantity = float(parts[1].strip())
+                measure = parts[2].strip()
+                current_recipe['ingredients'].append({'ingredient_name': ingredient_name, 'quantity': quantity, 'measure': measure})
+
+        # Добавляем последний рецепт
+        if current_recipe is not None:
+            cook_book[current_recipe['name']] = current_recipe['ingredients']
+
+    return cook_book
+
+
+def get_shop_list_by_dishes(dishes, person_count):
+    shop_list = {}
+    for dish in dishes:
+        if dish in cook_book:  # Проверяем, существует ли блюдо в рецептах
+            for ingredient in cook_book[dish]:
+                name = ingredient['ingredient_name']
+                quantity = ingredient['quantity'] * person_count
+                measure = ingredient['measure']
+
+                if name in shop_list:
+                    shop_list[name]['quantity'] += quantity
+                else:
+                    shop_list[name] = {'quantity': quantity, 'measure': measure}
+
+    return shop_list
+
+
+def main():
+    file_path = 'recipes.txt'
+
+    if os.path.exists(file_path):
+        global cook_book
+        cook_book = read_cookbook_from_file(file_path)
         pprint(cook_book)
+
+        # Запрашиваем количество персон
+        person_count = int(input("Введите количество персон: "))
+
+        # Выводим доступные блюда
+        print("Доступные блюда:")
+        for index, dish in enumerate(cook_book.keys(), start=1):
+            print(f"{index}. {dish}")
+
+        # Запрашиваем выбор блюд
+        selected_dishes = input("Введите номера блюд, разделенные запятыми: ")
+        selected_dishes_indices = [int(i.strip()) for i in selected_dishes.split(',')]
+        selected_dishes_names = [list(cook_book.keys())[i - 1] for i in selected_dishes_indices]
+
+        # Получаем список покупок
+        shop_list = get_shop_list_by_dishes(selected_dishes_names, person_count)
+        pprint(shop_list)
     else:
         print('Файл с рецептами не найден.')
 
